@@ -24,10 +24,10 @@ function ModalView(){
 	this.bodyNode.append(this.modalMask, this.modalMain);
 
 	//	获取需要操作的元素
-	this.modalViewPart = this.modalMain.find('.modal-view-part');
-	this.modalImage     = this.modalMain.find('.modal-image');
-	this.closeButton    = this.modalMain.find('.modal-close-button');
-	this.loading   = this.modalMain.find('.modal-loading')
+	this.modalViewPart   = this.modalMain.find('.modal-view-part');
+	this.modalImage      = this.modalMain.find('.modal-image');
+	this.closeButton     = this.modalMain.find('.modal-close-button');
+	this.loading   		 = this.modalMain.find('.modal-loading');
 	this.modalNextButton = this.modalMain.find('.modal-next-button');
 	this.modalPrevButton = this.modalMain.find('.modal-prev-button');
 	
@@ -50,7 +50,6 @@ function ModalView(){
 		//	元素被点击后弹出遮罩层与内容层
 		_this.showModal($(this).attr('data-source'));
 
-		_this.displayButton();
 	});
 
 	//	图片切换按钮的显示逻辑
@@ -82,18 +81,27 @@ function ModalView(){
 		}
 	});
 
+
+
+	var timer = undefined;
 	//	窗口调整大小后重置图片尺寸
 	$(window).resize(function(event) {
-		_this.setImageSize(_this.modalItemsInfoArray[_this.itemIndex].src);
-
+		if(!timer){
+			timer = setTimeout(function(){
+				_this.setImageSize(_this.modalItemsInfoArray[_this.itemIndex].src);
+				timer = undefined;	
+			}, 500);
+		}
 	});
 	
 	
 }
 ModalView.prototype = {
+
 	showModal : function(src){
 		var _this = this;
 
+		//	获取浏览器视口尺寸
 		var windowWidth  = $(window).width();
 		var windowHeight = $(window).height();
 
@@ -103,7 +111,8 @@ ModalView.prototype = {
 		_this.modalMask.fadeIn();
 		_this.modalMain.fadeIn();
 
-		//	设定弹出框尺寸
+
+		//	设定弹出框初始尺寸
 		this.modalMain.css({
 			//	图片区域有5px的border，左右加起来为10
 			width: windowWidth / 2,
@@ -113,6 +122,8 @@ ModalView.prototype = {
 			top: windowHeight / 2  /2
 		});
 
+		//	下一步应该是将this.modalMain运动到大图的合理尺寸
+		
 
 		_this.setImageSize(src);
 		
@@ -120,6 +131,7 @@ ModalView.prototype = {
 	setImageSize : function(src){
 		var _this = this;
 
+		//	重置上一次操作的数据	
 		_this.loading.show();
 		_this.closeButton.hide();
 		_this.modalImage.hide();
@@ -132,9 +144,13 @@ ModalView.prototype = {
 
 		//	取得图片的真实宽高
 		this.earlyImage(src, function(){
+
+
 			_this.modalImage.attr('src', src);
 			_this.changeImageSize();
 		});	
+
+
 
 	},
 	changeImageSize : function(){
@@ -146,13 +162,14 @@ ModalView.prototype = {
 		var imageWigth   = _this.modalImage.width();
 		var imageHeight  = _this.modalImage.height();
 
+		
 		//	如果图片宽高大于浏览器的视口的宽高比，计算是否溢出
 		var scale   = Math.min(windowWidth/(imageWigth + 10), windowHeight/(imageHeight + 10), 1);
 		imageWigth  = imageWigth * scale / 1.1;
 		imageHeight = imageHeight * scale / 1.1;
 
 
-		//	放大弹出层动画执行完毕后，设置图片尺寸并将其显示
+	
 		_this.modalMain.animate({
 			width      : imageWigth + 10,
 			height     : imageHeight + 10,
@@ -180,7 +197,7 @@ ModalView.prototype = {
 		}else{
 			image.onload = function(){
 				callBack();
-			}
+			};
 		}
 		image.src = src;
 	},
@@ -207,34 +224,58 @@ ModalView.prototype = {
 		return index;
 	},
 	switchImage : function(dir){
-		var _this = this;
+		var 
+			_this = this,
+			img
+			;
 		if(dir === 'next'){
-		 	_this.setImageSize(_this.modalItemsInfoArray[++_this.itemIndex].src);
+			//	判断是否超出最大限制
+			_this.itemIndex++;
+			if(_this.itemIndex >= _this.modalItemsInfoArray.length){
+				_this.itemIndex = _this.modalItemsInfoArray.length - 1;
+				alert('哥，已经是最后一张了');
+				return;
+			}
+			img = _this.modalItemsInfoArray[_this.itemIndex];
+		
+		 	_this.setImageSize(img.src);
+		 	
 		}else if(dir === 'prev'){
-			 _this.setImageSize(_this.modalItemsInfoArray[--_this.itemIndex].src);
+			_this.itemIndex--;
+
+			if(_this.itemIndex < 0){
+				_this.itemIndex = 0;
+				alert('哥，已经是第一张了');
+				return;
+			}
+
+			img = _this.modalItemsInfoArray[_this.itemIndex];
+			_this.setImageSize(img.src);
 		}
-		_this.displayButton();
+
 	},
 	displayButton : function(){
 		var _this = this;
 		if(_this.modalItemsInfoArray.length > 1){
 			if(_this.itemIndex === 0){
 				//	第一个元素的情况
-				_this.modalPrevButton.addClass('disabled')
-				_this.modalNextButton.removeClass('disabled')
+				_this.modalPrevButton.addClass('disabled');
+				_this.modalNextButton.removeClass('disabled');
 			}else if(_this.itemIndex === (_this.modalItemsInfoArray.length - 1)){
 				//	最后一个元素的情况
-				_this.modalPrevButton.removeClass('disabled')
-				_this.modalNextButton.addClass('disabled')
+				_this.modalPrevButton.removeClass('disabled');
+				_this.modalNextButton.addClass('disabled');
 			}else{
 				//	其他情况
-				_this.modalPrevButton.removeClass('disabled')
-				_this.modalNextButton.removeClass('disabled')
+				_this.modalPrevButton.removeClass('disabled');
+				_this.modalNextButton.removeClass('disabled');
 			}
 		}
 	}
 };
 
-new ModalView();
+var modal = new ModalView();
+
+
 
 })();
