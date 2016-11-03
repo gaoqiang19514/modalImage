@@ -1,7 +1,7 @@
 (function(){
 
 function ModalView(){
-	var _this = this;
+	var that = this;
 	var main_html = String()
 		+  '<div class="modal-view-part">'	
 		+		'<span class="modal-prev-button"></span>'
@@ -36,25 +36,30 @@ function ModalView(){
 
 	//	给Mask层添加点击关闭事件
 	this.modalMask.click(function(event) {
-		_this.modalMain.fadeOut(300);
+		that.modalMain.fadeOut(300);
 		$(this).fadeOut(500);
 	});
 	//	给关闭按钮添加点击事件
 	this.closeButton.click(function(event) {
-		_this.modalMain.fadeOut(300);
-		_this.modalMask.fadeOut(500);
+		that.modalMain.fadeOut(300);
+		that.modalMask.fadeOut(500);
 	});
 	
 	this.bodyNode.delegate('.modal', 'click', function(event) {
 		event.stopPropagation();
+
+		//	用自身的src属性判断并设定当前的下标
+		var id = $(this).offset().left + $(this).offset().top;
+
+		that.itemIndex = that.getArrayIndex(id);
 		//	元素被点击后弹出遮罩层与内容层
-		_this.showModal($(this).attr('data-source'));
+		that.showModal($(this).attr('data-source'));
 
 	});
 
 	//	图片切换按钮的显示逻辑
 	this.modalNextButton.hover(function() {
-		if(!$(this).hasClass('disabled') && _this.modalItemsInfoArray.length > 1 && _this.itemIndex != _this.modalItemsInfoArray.length - 1){
+		if(!$(this).hasClass('disabled') && that.modalItemsInfoArray.length > 1 && that.itemIndex != that.modalItemsInfoArray.length - 1){
 			$(this).addClass('modal-next-button-show');
 		}
 	}, function() {
@@ -62,7 +67,7 @@ function ModalView(){
 	});
 
 	this.modalPrevButton.hover(function() {
-		if(!$(this).hasClass('disabled') && _this.itemIndex != 0 && _this.modalItemsInfoArray.length > 1){
+		if(!$(this).hasClass('disabled') && that.itemIndex != 0 && that.modalItemsInfoArray.length > 1){
 			$(this).addClass('modal-prev-button-show');
 		}
 	}, function() {
@@ -72,12 +77,12 @@ function ModalView(){
 	//	图片切换按钮的调用
 	this.modalNextButton.click(function(event) {
 		if(!$(this).hasClass('disabled')){
-			_this.switchImage('next');
+			that.switchImage('next');
 		}
 	});
 	this.modalPrevButton.click(function(event) {
 		if(!$(this).hasClass('disabled')){
-			_this.switchImage('prev');
+			that.switchImage('prev');
 		}
 	});
 
@@ -88,7 +93,7 @@ function ModalView(){
 	$(window).resize(function(event) {
 		if(!timer){
 			timer = setTimeout(function(){
-				_this.setImageSize(_this.modalItemsInfoArray[_this.itemIndex].src);
+				that.setImageSize(that.modalItemsInfoArray[that.itemIndex].src);
 				timer = undefined;	
 			}, 500);
 		}
@@ -99,17 +104,14 @@ function ModalView(){
 ModalView.prototype = {
 
 	showModal : function(src){
-		var _this = this;
+		var that = this;
 
 		//	获取浏览器视口尺寸
 		var windowWidth  = $(window).width();
 		var windowHeight = $(window).height();
 
-		//	用自身的src属性判断并设定当前的下标
-		this.itemIndex = this.getArrayIndex(src);
-
-		_this.modalMask.fadeIn();
-		_this.modalMain.fadeIn();
+		that.modalMask.fadeIn();
+		that.modalMain.fadeIn();
 
 
 		//	设定弹出框初始尺寸
@@ -125,19 +127,19 @@ ModalView.prototype = {
 		//	下一步应该是将this.modalMain运动到大图的合理尺寸
 		
 
-		_this.setImageSize(src);
+		that.setImageSize(src);
 		
 	},
 	setImageSize : function(src){
-		var _this = this;
+		var that = this;
 
 		//	重置上一次操作的数据	
-		_this.loading.show();
-		_this.closeButton.hide();
-		_this.modalImage.hide();
+		that.loading.show();
+		that.closeButton.hide();
+		that.modalImage.hide();
 
 		//	因为图片元素的尺寸是直接设置上去的，第二次会直接读取到上一张图片的尺寸，清空才能避免
-		_this.modalImage.css({
+		that.modalImage.css({
 				width: 'auto',
 				height: 'auto'
 		});
@@ -146,21 +148,18 @@ ModalView.prototype = {
 		this.earlyImage(src, function(){
 
 
-			_this.modalImage.attr('src', src);
-			_this.changeImageSize();
+			that.modalImage.attr('src', src);
+			that.changeImageSize();
 		});	
-
-
-
 	},
 	changeImageSize : function(){
-		var _this = this;
+		var that = this;
 		//	修改图片尺寸为当前页面可容纳的尺寸
 		//	图片预载好了，下面可以将弹出框运动至可以容纳图片和兼容视口的尺寸
 		var windowWidth  = $(window).width();
 		var windowHeight = $(window).height();
-		var imageWigth   = _this.modalImage.width();
-		var imageHeight  = _this.modalImage.height();
+		var imageWigth   = that.modalImage.width();
+		var imageHeight  = that.modalImage.height();
 
 		
 		//	如果图片宽高大于浏览器的视口的宽高比，计算是否溢出
@@ -170,18 +169,18 @@ ModalView.prototype = {
 
 
 	
-		_this.modalMain.animate({
+		that.modalMain.animate({
 			width      : imageWigth + 10,
 			height     : imageHeight + 10,
 			marginLeft : -(imageWigth / 2),
 			top        : (windowHeight - imageHeight) / 2
 		}, 300, function() {
-			_this.modalImage.css({
+			that.modalImage.css({
 				width  : imageWigth,
 				height : imageHeight 
 			}).fadeIn();
-			_this.closeButton.show();
-			_this.loading.hide();
+			that.closeButton.show();
+			that.loading.hide();
 		
 		});
 	},
@@ -202,22 +201,24 @@ ModalView.prototype = {
 		image.src = src;
 	},
 	getModalItems : function(){
-		var _this = this;
+		var that = this;
 		var itemArray = Array();
 
-		itemArray = _this.bodyNode.find('.modal');
+		itemArray = that.bodyNode.find('.modal');
 		itemArray.each(function(index, el) {
-			_this.modalItemsInfoArray.push({
-				'src' : $(this).attr('data-source'),
-				'alt' : $(this).attr('alt')
+			that.modalItemsInfoArray.push({
+				id: $(this).offset().left + $(this).offset().top,
+				src : $(this).attr('data-source'),
+				alt : $(this).attr('alt')
 			});
 		});
 	},
-	getArrayIndex : function(src){
+	getArrayIndex : function(id){
 		var index = 0;
+
 		$(this.modalItemsInfoArray).each(function(i, el) {
 			index = i;
-			if(this.src === src){
+			if(el.id === id){
 				return false;
 			}
 		});
@@ -225,50 +226,50 @@ ModalView.prototype = {
 	},
 	switchImage : function(dir){
 		var 
-			_this = this,
+			that = this,
 			img
 			;
 		if(dir === 'next'){
 			//	判断是否超出最大限制
-			_this.itemIndex++;
-			if(_this.itemIndex >= _this.modalItemsInfoArray.length){
-				_this.itemIndex = _this.modalItemsInfoArray.length - 1;
+			that.itemIndex++;
+			if(that.itemIndex >= that.modalItemsInfoArray.length){
+				that.itemIndex = that.modalItemsInfoArray.length - 1;
 				alert('哥，已经是最后一张了');
 				return;
 			}
-			img = _this.modalItemsInfoArray[_this.itemIndex];
+			img = that.modalItemsInfoArray[that.itemIndex];
 		
-		 	_this.setImageSize(img.src);
+		 	that.setImageSize(img.src);
 		 	
 		}else if(dir === 'prev'){
-			_this.itemIndex--;
+			that.itemIndex--;
 
-			if(_this.itemIndex < 0){
-				_this.itemIndex = 0;
+			if(that.itemIndex < 0){
+				that.itemIndex = 0;
 				alert('哥，已经是第一张了');
 				return;
 			}
 
-			img = _this.modalItemsInfoArray[_this.itemIndex];
-			_this.setImageSize(img.src);
+			img = that.modalItemsInfoArray[that.itemIndex];
+			that.setImageSize(img.src);
 		}
 
 	},
 	displayButton : function(){
-		var _this = this;
-		if(_this.modalItemsInfoArray.length > 1){
-			if(_this.itemIndex === 0){
+		var that = this;
+		if(that.modalItemsInfoArray.length > 1){
+			if(that.itemIndex === 0){
 				//	第一个元素的情况
-				_this.modalPrevButton.addClass('disabled');
-				_this.modalNextButton.removeClass('disabled');
-			}else if(_this.itemIndex === (_this.modalItemsInfoArray.length - 1)){
+				that.modalPrevButton.addClass('disabled');
+				that.modalNextButton.removeClass('disabled');
+			}else if(that.itemIndex === (that.modalItemsInfoArray.length - 1)){
 				//	最后一个元素的情况
-				_this.modalPrevButton.removeClass('disabled');
-				_this.modalNextButton.addClass('disabled');
+				that.modalPrevButton.removeClass('disabled');
+				that.modalNextButton.addClass('disabled');
 			}else{
 				//	其他情况
-				_this.modalPrevButton.removeClass('disabled');
-				_this.modalNextButton.removeClass('disabled');
+				that.modalPrevButton.removeClass('disabled');
+				that.modalNextButton.removeClass('disabled');
 			}
 		}
 	}
